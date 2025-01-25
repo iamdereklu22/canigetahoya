@@ -61,7 +61,7 @@ const PatientPage = ({ patients, setPatients, notes }) => {
     <div className="container">
       <header className="header">
         <Link to="/" className="backButton">← Back</Link>
-        <span className="userIcon">👤 Derek Lu</span>
+        <span className="userIcon">👤 Username</span>
       </header>
 
       <input
@@ -95,6 +95,18 @@ const PatientPage = ({ patients, setPatients, notes }) => {
           <label><span>Last Visit:</span> <input type="date" value={patient.lastVisit || ""} onChange={(e) => updateField("lastVisit", e.target.value)} /></label>
         </div>
       </div>
+
+      <div className="infoContainer">
+        <div className="column">
+            <label><span>Allergies:</span> <input type="text" value={patient.allergies || ""} onChange={(e) => updateField("allergies", e.target.value)} /></label>
+            <label><span>Medications:</span> <input type="text" value={patient.medications || ""} onChange={(e) => updateField("medications", e.target.value)} /></label>
+        </div>
+        <div className="column">
+            <label><span>Height:</span> <input type="text" value={patient.height || ""} onChange={(e) => updateField("height", e.target.value)} /></label>
+            <label><span>Weight:</span> <input type="text" value={patient.weight || ""} onChange={(e) => updateField("weight", e.target.value)} /></label>
+        </div>    
+      </div>
+
 
       <h3>Notes</h3>
       <div className="tableContainer">
