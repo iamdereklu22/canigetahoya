@@ -1,74 +1,102 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "./firebaseConfig";
+import "./TextPage.css"; // ✅ Keeping styles consistent
 
-const TextPage = ({ notes, updateText }) => {
+const TextPage = () => {
   const { id, noteId } = useParams();
   const navigate = useNavigate();
+  const [note, setNote] = useState(null);
+  const [text, setText] = useState("");
 
-  // Get the note safely, avoid undefined errors
-  const note = notes?.[id]?.[noteId] || null;
-
-  // Initialize state at the top level
-  const [text, setText] = useState(note.text || "");
-
-  // Ensure the text updates if the user switches notes
   useEffect(() => {
-    setText(note.text || "");
-  }, [note.text]);
+    const fetchNote = async () => {
+      try {
+        const audioRef = doc(db, "audio_info", noteId);
+        const audioSnap = await getDoc(audioRef);
 
-  const handleSave = () => {
+        const textRef = doc(db, "summary_txt", noteId);
+        const textSnap = await getDoc(textRef);
+
+        if (textSnap.exists() && audioSnap.exists()) {
+          setNote({
+            text: textSnap.data().text || "",
+            time: audioSnap.data().timestamp?.toDate().toLocaleString() || "Unknown",
+            author: `${audioSnap.data().firstName} ${audioSnap.data().lastName}` || "Unknown",
+            location: audioSnap.data().location || "Unknown",
+          });
+          setText(textSnap.data().text || "");
+        } else {
+          console.error("Note metadata or text not found.");
+        }
+      } catch (error) {
+        console.error("Error fetching note:", error);
+      }
+    };
+
+    fetchNote();
+  }, [noteId]);
+
+  const handleSave = async () => {
     if (text.trim() === "") {
       alert("Text cannot be empty!");
       return;
     }
-    updateText(id, noteId, text);  // ✅ Use 'noteId' instead of 'textId'
-    navigate(`/patient/${id}`);
+
+    try {
+      const textRef = doc(db, "summary_txt", noteId);
+      await setDoc(textRef, { text }, { merge: true });
+
+      // alert("Text updated successfully!");
+      navigate(`/patient/${id}`);
+    } catch (error) {
+      console.error("Error updating text:", error);
+    }
   };
 
-  // If the note doesn't exist, show an error message
-  if (!notes?.[id]?.[noteId]) {
+  if (!note) {
     return (
-      <div style={styles.container}>
-        <Link to={`/patient/${id}`} style={styles.backButton}>← Back</Link>
-        <h2>Text Not Found</h2>
-        <p>The requested note does not exist.</p>
+      <div className="container">
+        <Link to={`/patient/${id}`} className="backButton">← Back</Link>
+        <h2 className="pageTitle">Text Not Found</h2>
+        <p className="infoMessage">The requested note does not exist.</p>
       </div>
     );
   }
 
   return (
-    <div style={styles.container}>
-      <header style={styles.header}>
-        <Link to={`/patient/${id}`} style={styles.backButton}>← Back</Link>
-        <h2>Text Editor</h2>
+    <div className="container">
+      {/* Header */}
+      <header className="header">
+        <div className="header-left">
+          <Link to={`/patient/${id}`} className="backButton">← Back</Link>
+        </div>
+        <h2 className="pageTitle">Edit Note</h2>
+        <div className="header-right">
+          <span className="userIcon">👤 Derek Lu</span>
+        </div>
       </header>
 
-      <div style={styles.infoBox}>
-        <p><strong>Time:</strong> {note.time}</p>
-        <p><strong>Author:</strong> {note.author}</p>
-        <p><strong>Location:</strong> {note.location}</p>
+      {/* Metadata Section */}
+      <div className="infoContainer">
+        <p><strong>🕒 Time:</strong> {note.time}</p>
+        <p><strong>👤 Author:</strong> {note.author}</p>
+        <p><strong>📍 Location:</strong> {note.location}</p>
       </div>
 
-      <textarea 
-        style={styles.textArea} 
-        value={text} 
+      {/* Editable Text Area */}
+      <textarea
+        className="textArea"
+        value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder="Edit text here..."
       ></textarea>
 
-      <button style={styles.saveButton} onClick={handleSave}>Save</button>
+      {/* Save Button */}
+      <button className="saveButton" onClick={handleSave}>💾 Save</button>
     </div>
   );
-};
-
-// ✅ Updated Styles for Better Layout
-const styles = {
-  container: { padding: "20px", fontFamily: "Arial, sans-serif", background: "#f4f6f9", height: "100vh" },
-  header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" },
-  backButton: { textDecoration: "none", fontSize: "16px", color: "blue" },
-  infoBox: { background: "#ffffff", padding: "10px", borderRadius: "8px", marginBottom: "10px", boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)" },
-  textArea: { width: "100%", height: "200px", padding: "10px", fontSize: "16px", borderRadius: "5px", border: "1px solid #ccc" },
-  saveButton: { padding: "10px", background: "#008CBA", color: "white", border: "none", cursor: "pointer", borderRadius: "5px", marginTop: "10px", width: "100%" }
 };
 
 export default TextPage;
