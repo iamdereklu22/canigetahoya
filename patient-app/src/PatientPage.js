@@ -107,7 +107,6 @@ const PatientPage = ({ patients, setPatients, notes }) => {
         </div>    
       </div>
 
-
       <h3>Notes</h3>
       <div className="tableContainer">
         <div className="tableHeader">

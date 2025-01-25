@@ -7,20 +7,22 @@ const HomePage = ({ patients }) => {
   const [sortOrder, setSortOrder] = useState("asc");
 
   const sortedPatients = Object.keys(patients)
-    .filter((id) =>
-      patients[id].firstName.toLowerCase().includes(search.toLowerCase()) ||
-      patients[id].lastName.toLowerCase().includes(search.toLowerCase())
-    )
-    .sort((a, b) => {
-      const valA = sortField === "name"
-        ? `${patients[a].firstName} ${patients[a].lastName}`
-        : patients[a].lastVisit;
-      const valB = sortField === "name"
-        ? `${patients[b].firstName} ${patients[b].lastName}`
-        : patients[b].lastVisit;
+  .filter((id) => {
+    const firstName = patients[id]?.firstName || ""; // Ensure it's always a string
+    const lastName = patients[id]?.lastName || ""; // Ensure it's always a string
+    return firstName.toLowerCase().includes(search.toLowerCase()) ||
+           lastName.toLowerCase().includes(search.toLowerCase());
+  })
+  .sort((a, b) => {
+    const valA = sortField === "name"
+      ? `${patients[a]?.firstName || ""} ${patients[a]?.lastName || ""}`
+      : patients[a]?.lastVisit || "";
+    const valB = sortField === "name"
+      ? `${patients[b]?.firstName || ""} ${patients[b]?.lastName || ""}`
+      : patients[b]?.lastVisit || "";
 
-      return sortOrder === "asc" ? valA.localeCompare(valB) : valB.localeCompare(valA);
-    });
+    return sortOrder === "asc" ? valA.localeCompare(valB) : valB.localeCompare(valA);
+  });
 
   const toggleSort = (field) => {
     setSortField(field);

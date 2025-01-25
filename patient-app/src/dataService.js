@@ -1,51 +1,54 @@
 // src/dataService.js
-const initialPatients = {
-    1: { 
-      lastName: "Doe", 
-      firstName: "John", 
-      sex: "M", 
-      dob: "1990-07-07", 
-      firstVisit: "2020-06-10",
-      lastVisit: "2025-01-22",
-      address: "123 Main St, New York, NY",
-      phone: "555-1234",
-      email: "john.doe@example.com",
-      allergies: "Peanuts", 
-      medications: "Ibuprofen", 
-      height: "6ft", 
-      weight: "180 lbs" 
-    },
-    2: { 
-      lastName: "Smith", 
-      firstName: "Jane", 
-      sex: "F", 
-      dob: "1985-07-07", 
-      firstVisit: "2018-03-15",
-      lastVisit: "2025-01-23",
-      address: "456 Oak Ave, Los Angeles, CA",
-      phone: "555-5678",
-      email: "jane.smith@example.com",
-      allergies: "None", 
-      medications: "Aspirin", 
-      height: "5'7", 
-      weight: "150 lbs" 
-    },
-    3: { 
-      lastName: "Johnson", 
-      firstName: "Emily", 
-      sex: "F", 
-      dob: "2000-07-07", 
-      firstVisit: "2023-09-30",
-      lastVisit: "2025-01-03",
-      address: "789 Pine St, Chicago, IL",
-      phone: "555-7890",
-      email: "emily.johnson@example.com",
-      allergies: "Shellfish", 
-      medications: "None", 
-      height: "5'4", 
-      weight: "130 lbs" 
-    }
-  };
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "./firebaseConfig"; // Ensure firebaseConfig is properly set up
+
+// const initialPatients = {
+//     1: { 
+//       lastName: "Doe", 
+//       firstName: "John", 
+//       sex: "M", 
+//       dob: "1990-07-07", 
+//       firstVisit: "2020-06-10",
+//       lastVisit: "2025-01-22",
+//       address: "123 Main St, New York, NY",
+//       phone: "555-1234",
+//       email: "john.doe@example.com",
+//       allergies: "Peanuts", 
+//       medications: "Ibuprofen", 
+//       height: "6ft", 
+//       weight: "180 lbs" 
+//     },
+    // 2: { 
+    //   lastName: "Smith", 
+    //   firstName: "Jane", 
+    //   sex: "F", 
+    //   dob: "1985-07-07", 
+    //   firstVisit: "2018-03-15",
+    //   lastVisit: "2025-01-23",
+    //   address: "456 Oak Ave, Los Angeles, CA",
+    //   phone: "555-5678",
+    //   email: "jane.smith@example.com",
+    //   allergies: "None", 
+    //   medications: "Aspirin", 
+    //   height: "5'7", 
+    //   weight: "150 lbs" 
+    // },
+    // 3: { 
+    //   lastName: "Johnson", 
+    //   firstName: "Emily", 
+    //   sex: "F", 
+    //   dob: "2000-07-07", 
+    //   firstVisit: "2023-09-30",
+    //   lastVisit: "2025-01-03",
+    //   address: "789 Pine St, Chicago, IL",
+    //   phone: "555-7890",
+    //   email: "emily.johnson@example.com",
+    //   allergies: "Shellfish", 
+    //   medications: "None", 
+    //   height: "5'4", 
+    //   weight: "130 lbs" 
+    // }
+//   };
   
   const initialNotes = {
     1: { 
@@ -61,9 +64,21 @@ const initialPatients = {
   };
   
   // Simulate fetching data (later replace with Firebase calls)
-  export const getPatients = () => {
-    return new Promise((resolve) => {
-      setTimeout(() => resolve(initialPatients), 500); // Simulate network delay
+  export const getPatients = (setPatients) => {
+    const patientsRef = collection(db, "patient_info");
+  
+    return onSnapshot(patientsRef, (snapshot) => {
+      const patientsData = {};
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.patient_info) {
+          patientsData[doc.id] = { id: doc.id, ...data.patient_info }; // Extract patient_info
+        }
+      });
+      console.log("Fetched Patients:", patientsData); // Debugging
+      setPatients(patientsData);
+    }, (error) => {
+      console.error("Error fetching real-time patients:", error);
     });
   };
   
