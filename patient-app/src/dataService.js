@@ -1,54 +1,6 @@
 // src/dataService.js
-import { collection, onSnapshot } from "firebase/firestore";
+import { doc, setDoc, collection, onSnapshot } from "firebase/firestore";
 import { db } from "./firebaseConfig"; // Ensure firebaseConfig is properly set up
-
-// const initialPatients = {
-//     1: { 
-//       lastName: "Doe", 
-//       firstName: "John", 
-//       sex: "M", 
-//       dob: "1990-07-07", 
-//       firstVisit: "2020-06-10",
-//       lastVisit: "2025-01-22",
-//       address: "123 Main St, New York, NY",
-//       phone: "555-1234",
-//       email: "john.doe@example.com",
-//       allergies: "Peanuts", 
-//       medications: "Ibuprofen", 
-//       height: "6ft", 
-//       weight: "180 lbs" 
-//     },
-    // 2: { 
-    //   lastName: "Smith", 
-    //   firstName: "Jane", 
-    //   sex: "F", 
-    //   dob: "1985-07-07", 
-    //   firstVisit: "2018-03-15",
-    //   lastVisit: "2025-01-23",
-    //   address: "456 Oak Ave, Los Angeles, CA",
-    //   phone: "555-5678",
-    //   email: "jane.smith@example.com",
-    //   allergies: "None", 
-    //   medications: "Aspirin", 
-    //   height: "5'7", 
-    //   weight: "150 lbs" 
-    // },
-    // 3: { 
-    //   lastName: "Johnson", 
-    //   firstName: "Emily", 
-    //   sex: "F", 
-    //   dob: "2000-07-07", 
-    //   firstVisit: "2023-09-30",
-    //   lastVisit: "2025-01-03",
-    //   address: "789 Pine St, Chicago, IL",
-    //   phone: "555-7890",
-    //   email: "emily.johnson@example.com",
-    //   allergies: "Shellfish", 
-    //   medications: "None", 
-    //   height: "5'4", 
-    //   weight: "130 lbs" 
-    // }
-//   };
   
   const initialNotes = {
     1: { 
@@ -80,6 +32,16 @@ import { db } from "./firebaseConfig"; // Ensure firebaseConfig is properly set 
     }, (error) => {
       console.error("Error fetching real-time patients:", error);
     });
+  };
+
+  export const updatePatient = async (patientId, updatedData) => {
+    try {
+      const patientRef = doc(db, "patient_info", patientId);
+      await setDoc(patientRef, updatedData, { merge: true });
+      console.log(`Updated patient ${patientId} successfully.`);
+    } catch (error) {
+      console.error("Error updating patient:", error);
+    }
   };
   
   export const getNotes = () => {
