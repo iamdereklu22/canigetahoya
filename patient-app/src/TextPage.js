@@ -1,29 +1,53 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 
-// Mock text content for each text entry
-const textContent = {
-  t1: "Initial notes for John Doe's first visit.",
-  t2: "Follow-up notes for John Doe's second visit.",
-  t3: "Jane Smith's recovery update.",
-  t4: "Annual check-up summary for Emily Johnson.",
-  t5: "Extra notes from Dr. Patel for Emily Johnson."
-};
-
-const TextPage = () => {
-  const { id, textId } = useParams();
+const TextPage = ({ notes, updateText }) => {
+  const { id, noteId } = useParams();
   const navigate = useNavigate();
-  const [text, setText] = useState(textContent[textId] || "");
+
+  // Get the note safely, avoid undefined errors
+  const note = notes?.[id]?.[noteId] || null;
+
+  // Initialize state at the top level
+  const [text, setText] = useState(note.text || "");
+
+  // Ensure the text updates if the user switches notes
+  useEffect(() => {
+    setText(note.text || "");
+  }, [note.text]);
 
   const handleSave = () => {
-    console.log(`Saved Text for ${textId}:`, text);
+    if (text.trim() === "") {
+      alert("Text cannot be empty!");
+      return;
+    }
+    updateText(id, noteId, text);  // ✅ Use 'noteId' instead of 'textId'
     navigate(`/patient/${id}`);
   };
 
+  // If the note doesn't exist, show an error message
+  if (!notes?.[id]?.[noteId]) {
+    return (
+      <div style={styles.container}>
+        <Link to={`/patient/${id}`} style={styles.backButton}>← Back</Link>
+        <h2>Text Not Found</h2>
+        <p>The requested note does not exist.</p>
+      </div>
+    );
+  }
+
   return (
     <div style={styles.container}>
-      <Link to={`/patient/${id}`} style={styles.backButton}>← Back</Link>
-      <h2>Text Editor</h2>
+      <header style={styles.header}>
+        <Link to={`/patient/${id}`} style={styles.backButton}>← Back</Link>
+        <h2>Text Editor</h2>
+      </header>
+
+      <div style={styles.infoBox}>
+        <p><strong>Time:</strong> {note.time}</p>
+        <p><strong>Author:</strong> {note.author}</p>
+        <p><strong>Location:</strong> {note.location}</p>
+      </div>
 
       <textarea 
         style={styles.textArea} 
@@ -37,11 +61,14 @@ const TextPage = () => {
   );
 };
 
+// ✅ Updated Styles for Better Layout
 const styles = {
-  container: { padding: "20px", fontFamily: "Arial, sans-serif" },
-  backButton: { textDecoration: "none", fontSize: "16px", marginBottom: "10px", display: "block" },
-  textArea: { width: "100%", height: "200px", padding: "10px", fontSize: "16px" },
-  saveButton: { padding: "10px", background: "#008CBA", color: "white", border: "none", cursor: "pointer", borderRadius: "5px", marginTop: "10px" }
+  container: { padding: "20px", fontFamily: "Arial, sans-serif", background: "#f4f6f9", height: "100vh" },
+  header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" },
+  backButton: { textDecoration: "none", fontSize: "16px", color: "blue" },
+  infoBox: { background: "#ffffff", padding: "10px", borderRadius: "8px", marginBottom: "10px", boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)" },
+  textArea: { width: "100%", height: "200px", padding: "10px", fontSize: "16px", borderRadius: "5px", border: "1px solid #ccc" },
+  saveButton: { padding: "10px", background: "#008CBA", color: "white", border: "none", cursor: "pointer", borderRadius: "5px", marginTop: "10px", width: "100%" }
 };
 
 export default TextPage;
