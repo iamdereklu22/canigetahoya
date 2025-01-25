@@ -1,55 +1,55 @@
-import { useState, useEffect, useRef } from 'react';
-import { 
-  Animated, 
-  TouchableWithoutFeedback, 
-  TouchableOpacity, 
-  View, 
-  StyleSheet, 
-  Alert, 
-  TextInput, 
+import { useState, useEffect, useRef } from "react";
+import {
+  Animated,
+  TouchableWithoutFeedback,
+  TouchableOpacity,
+  View,
+  StyleSheet,
+  Alert,
+  TextInput,
   Text,
   Platform,
-  SafeAreaView
-} from 'react-native';
-import { Audio } from 'expo-av';
-import * as Location from 'expo-location';
-import { MaterialIcons } from '@expo/vector-icons';
-import { collection, addDoc, doc, runTransaction } from 'firebase/firestore';
-import { db } from './firebaseConfig';
+  SafeAreaView,
+} from "react-native";
+import { Audio } from "expo-av";
+import * as Location from "expo-location";
+import { MaterialIcons } from "@expo/vector-icons";
+import { collection, addDoc, doc, runTransaction } from "firebase/firestore";
+import { db } from "./firebaseConfig";
 
 export default function App() {
   const [recording, setRecording] = useState();
   const [isPaused, setIsPaused] = useState(false);
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [location, setLocation] = useState(null);
   const [showPrompt, setShowPrompt] = useState(true);
   const [showNotification, setShowNotification] = useState(false);
-  const [notificationMessage, setNotificationMessage] = useState('');
+  const [notificationMessage, setNotificationMessage] = useState("");
   const [permissionResponse, requestPermission] = Audio.usePermissions();
 
   useEffect(() => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission denied', 'Location permission is required');
+      if (status !== "granted") {
+        Alert.alert("Permission denied", "Location permission is required");
         return;
       }
       try {
         const currentLocation = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High
+          accuracy: Location.Accuracy.High,
         });
         setLocation(currentLocation);
       } catch (error) {
-        console.error('Error getting location:', error);
-        Alert.alert('Location Error', 'Could not get current location');
+        console.error("Error getting location:", error);
+        Alert.alert("Location Error", "Could not get current location");
       }
     })();
   }, []);
 
   const RecordingAnimation = ({ isRecording, isPaused }) => {
     const pulseAnim = new Animated.Value(1);
-  
+
     useEffect(() => {
       if (isRecording && !isPaused) {
         Animated.loop(
@@ -70,7 +70,7 @@ export default function App() {
         pulseAnim.setValue(1);
       }
     }, [isRecording, isPaused]);
-  
+
     return (
       <Animated.View
         style={[
@@ -81,19 +81,19 @@ export default function App() {
           },
         ]}
       >
-        <MaterialIcons 
-          name="mic" 
-          size={50} 
-          color={isPaused ? "#666" : "#ff0000"} 
+        <MaterialIcons
+          name="mic"
+          size={50}
+          color={isPaused ? "#666" : "#ff0000"}
         />
       </Animated.View>
     );
   };
-  
+
   async function startRecording() {
     try {
-      if (permissionResponse.status !== 'granted') {
-        console.log('Requesting permission..');
+      if (permissionResponse.status !== "granted") {
+        console.log("Requesting permission..");
         await requestPermission();
       }
       await Audio.setAudioModeAsync({
@@ -101,54 +101,55 @@ export default function App() {
         playsInSilentModeIOS: true,
       }); /* @end */
 
-      console.log('Starting recording..');
+      console.log("Starting recording..");
       /* @info */ const { recording } = await Audio.Recording.createAsync(
         /* @end */ Audio.RecordingOptionsPresets.HIGH_QUALITY
       );
       setRecording(recording);
       setIsPaused(false);
-      console.log('Recording started');
+      console.log("Recording started");
     } catch (err) {
-      console.error('Failed to start recording', err);
+      console.error("Failed to start recording", err);
     }
   }
 
   async function pauseRecording() {
     try {
       if (!recording) {
-        console.log('No active recording to pause');
+        console.log("No active recording to pause");
         return;
       }
 
       if (isPaused) {
         await recording.startAsync(); // Resume recording
         setIsPaused(false);
-        console.log('Recording resumed');
+        console.log("Recording resumed");
       } else {
         await recording.pauseAsync(); // Pause recording
         setIsPaused(true);
-        console.log('Recording paused');
+        console.log("Recording paused");
       }
     } catch (err) {
-      console.error('Failed to pause/resume recording', err);
+      console.error("Failed to pause/resume recording", err);
     }
   }
 
   async function getNextId() {
-    const counterRef = doc(db, 'counters', 'recordingCounter');
-    
+    const counterRef = doc(db, "counters", "recordingCounter");
+
     try {
       const result = await runTransaction(db, async (transaction) => {
         const counterDoc = await transaction.get(counterRef);
-        const newCount = (counterDoc.exists() ? counterDoc.data().value : 0) + 1;
-        
-        transaction.set(counterRef, { value: newCount });
+        const newCount =
+          (counterDoc.exists() ? counterDoc.data().value : 0) + 1;
+
+        transaction.set(counterRef, { value: newCount }, { merge: true });
         return newCount;
       });
-      
+
       return result;
     } catch (error) {
-      console.error('Error getting next ID:', error);
+      console.error("Error getting next ID:", error);
       throw error;
     }
   }
@@ -156,51 +157,57 @@ export default function App() {
   async function stopRecording() {
     try {
       if (!recording) {
-        console.log('No active recording to stop');
+        console.log("No active recording to stop");
         return;
       }
-      
-      console.log('Stopping recording..');
-      const uri = recording.getURI();
+
+      console.log("Stopping recording..");
       await recording.stopAndUnloadAsync();
+      const uri = recording.getURI();
       setRecording(undefined);
       setIsPaused(false);
       setShowPrompt(true);
-      const timestamp = new Date().toLocaleString('en-US', { 
-        timeZone: 'America/New_York' 
+
+      const timestamp = new Date().toLocaleString("en-US", {
+        timeZone: "America/New_York",
       });
-      const latitude = location.coords.latitude;
-      const longitude = location.coords.longitude;
-      locationString = `${latitude}, ${longitude}`;
-  
+
+      const latitude = location?.coords?.latitude || "Unknown";
+      const longitude = location?.coords?.longitude || "Unknown";
+      const locationString = `${latitude}, ${longitude}`;
+
+      // Fetch and increment the text_id counter
       const nextId = await getNextId();
 
-      // Save to audio_info collection
+      // Create structured data
       const audioInfo = {
         firstName: firstName,
         lastName: lastName,
-        timestamp: timestamp,
         location: locationString,
+        text_id: nextId, // Incremental counter
+        timestamp: timestamp,
         audioFile: uri,
-        audioID: nextId.toString()
       };
-  
-      await addDoc(collection(db, "audio_info"), audioInfo);
-      setShowNotification(true);
-      setNotificationMessage(`Recording for ${firstName} ${lastName} has been uploaded to the Patient App.`);
 
-      console.log('Recording metadata saved to audio_info collection');
-  
-    } catch (error) {
-      console.error('Error saving to Firestore:', error);
+      // Save to Firestore in the "audio_info" collection
+      await addDoc(collection(db, "audio_info"), audioInfo);
+
       setShowNotification(true);
-      setNotificationMessage('Failed to save recording. Please try again.');
+      setNotificationMessage(
+        `Recording for ${firstName} ${lastName} has been uploaded.`
+      );
+
+      console.log("Recording metadata saved to Firestore");
+    } catch (error) {
+      console.error("Error saving to Firestore:", error);
+      setShowNotification(true);
+      setNotificationMessage("Failed to save recording. Please try again.");
     }
   }
 
   const CustomNotification = ({ visible, message, onDismiss }) => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
-  
+
     useEffect(() => {
       if (visible) {
         Animated.sequence([
@@ -218,9 +225,9 @@ export default function App() {
         ]).start(() => onDismiss());
       }
     }, [visible]);
-  
+
     if (!visible) return null;
-  
+
     return (
       <TouchableWithoutFeedback onPress={onDismiss}>
         <Animated.View
@@ -228,12 +235,14 @@ export default function App() {
             styles.notification,
             {
               opacity: fadeAnim,
-              transform: [{
-                translateY: fadeAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [-20, 0],
-                }),
-              }],
+              transform: [
+                {
+                  translateY: fadeAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-20, 0],
+                  }),
+                },
+              ],
             },
           ]}
         >
@@ -244,7 +253,7 @@ export default function App() {
   };
 
   async function resetRecording() {
-    console.log('Resetting recording..');
+    console.log("Resetting recording..");
     if (recording) {
       await recording.stopAndUnloadAsync();
       await Audio.setAudioModeAsync({
@@ -253,22 +262,22 @@ export default function App() {
     }
     setRecording(undefined);
     setIsPaused(false);
-    console.log('Recording reset');
+    console.log("Recording reset");
   }
 
   return (
     <SafeAreaView style={styles.mainContainer}>
       <View style={styles.container}>
-        <MaterialIcons 
-          name="local-hospital" 
-          size={100} 
-          color="#007AFF" 
+        <MaterialIcons
+          name="local-hospital"
+          size={100}
+          color="#007AFF"
           style={styles.backgroundPattern}
         />
-        <MaterialIcons 
-          name="healing" 
-          size={100} 
-          color="#007AFF" 
+        <MaterialIcons
+          name="healing"
+          size={100}
+          color="#007AFF"
           style={styles.backgroundPatternBottom}
         />
         <Text style={styles.appTitle}>DocuMed</Text>
@@ -285,13 +294,15 @@ export default function App() {
           onChangeText={setLastName}
         />
         {(!firstName || !lastName) && (
-          <Text style={styles.errorText}>Please enter your first and last name</Text>
+          <Text style={styles.errorText}>
+            Please enter your first and last name
+          </Text>
         )}
         <View style={styles.controlsContainer}>
-          {(firstName && lastName) && showPrompt && !recording && (
+          {firstName && lastName && showPrompt && !recording && (
             <Text style={styles.recordPrompt}>Press to start recording!</Text>
           )}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.iconButton}
             onPress={() => {
               setShowPrompt(false);
@@ -299,22 +310,24 @@ export default function App() {
             }}
             disabled={!firstName || !lastName}
           >
-            <MaterialIcons 
-              name={recording ? (isPaused ? "play-arrow" : "pause") : "play-arrow"} 
-              size={32} 
-              color={(!firstName || !lastName) ? "#ccc" : "#007AFF"}
+            <MaterialIcons
+              name={
+                recording ? (isPaused ? "play-arrow" : "pause") : "play-arrow"
+              }
+              size={32}
+              color={!firstName || !lastName ? "#ccc" : "#007AFF"}
             />
           </TouchableOpacity>
           {recording && (
             <>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.iconButton}
                 onPress={stopRecording}
               >
                 <MaterialIcons name="stop" size={32} color="#007AFF" />
               </TouchableOpacity>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.iconButton}
                 onPress={() => {
                   resetRecording();
@@ -325,9 +338,7 @@ export default function App() {
             </>
           )}
         </View>
-        <RecordingAnimation 
-          isRecording={!!recording} isPaused={isPaused} 
-        />
+        <RecordingAnimation isRecording={!!recording} isPaused={isPaused} />
         <CustomNotification
           visible={showNotification}
           message={notificationMessage}
@@ -341,42 +352,42 @@ export default function App() {
 const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: Platform.OS === 'ios' ? 150 : 90,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingTop: Platform.OS === "ios" ? 150 : 90,
     paddingBottom: 30,
     paddingHorizontal: 20,
   },
   inputContainer: {
-    width: '100%',
+    width: "100%",
     marginBottom: 20,
   },
   backgroundPattern: {
-    position: 'absolute',
+    position: "absolute",
     top: 40,
     right: 30,
     opacity: 0.1,
   },
   backgroundPatternTop: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 80 : 60,
+    position: "absolute",
+    top: Platform.OS === "ios" ? 80 : 60,
     right: 30,
     opacity: 0.1,
   },
   backgroundPatternBottom: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 40,
     left: 30,
     opacity: 0.1,
   },
   input: {
-    width: '100%',
+    width: "100%",
     height: 50,
-    borderColor: '#ccc',
+    borderColor: "#ccc",
     borderWidth: 2,
     borderRadius: 8,
     marginBottom: 20,
@@ -384,28 +395,28 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   errorText: {
-    color: 'red',
+    color: "red",
     marginTop: 10,
     fontSize: 14,
   },
   appTitle: {
     fontSize: 42,
-    fontWeight: 'bold',
-    color: '#007AFF',
+    fontWeight: "bold",
+    color: "#007AFF",
     marginBottom: 40,
-    textAlign: 'center',
-    width: '100%',
+    textAlign: "center",
+    width: "100%",
     letterSpacing: 2,
   },
   animationContainer: {
     marginVertical: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   controlsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     marginVertical: 20,
     gap: 30,
   },
@@ -413,36 +424,36 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#f0f0f0",
+    justifyContent: "center",
+    alignItems: "center",
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
   },
   notification: {
-    position: 'absolute',
+    position: "absolute",
     top: 60,
     left: 20,
     right: 20,
-    backgroundColor: 'rgba(0,0,0,0.8)',
+    backgroundColor: "rgba(0,0,0,0.8)",
     padding: 15,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   notificationText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
   },
   recordPrompt: {
-    position: 'absolute',
+    position: "absolute",
     bottom: -40,
-    width: '100%',
-    textAlign: 'center',
+    width: "100%",
+    textAlign: "center",
     fontSize: 16,
-    color: '#007AFF',
-    fontWeight: 'bold',
+    color: "#007AFF",
+    fontWeight: "bold",
   },
 });
