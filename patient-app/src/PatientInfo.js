@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "./firebaseConfig"; // Firestore instance
+import { formatDateTime } from "./timeUtils";
 
 const PatientInfo = () => {
   const [patientData, setPatientData] = useState(null);
@@ -12,14 +13,23 @@ const PatientInfo = () => {
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        setPatientData(docSnap.data());
+        const data = docSnap.data();
+
+        // Convert Firestore Timestamps to formatted strings
+        const formattedData = {
+          ...data,
+          firstVisit: data.firstVisit ? formatDateTime(data.firstVisit) : "N/A",
+          lastVisit: data.lastVisit ? formatDateTime(data.lastVisit) : "N/A",
+        };
+
+        setPatientData(formattedData);
       } else {
         console.log("No such document!");
       }
     } catch (error) {
       console.error("Error fetching document:", error);
     }
-  };
+};
 
   useEffect(() => {
     fetchPatientInfo();
@@ -37,19 +47,51 @@ const PatientInfo = () => {
           <p>Time: {patientData.notes.time}</p>
 
           <h2>Patient Information:</h2>
-          <p><strong>First Name:</strong> {patientData.firstName || "N/A"}</p>
-          <p><strong>Last Name:</strong> {patientData.lastName || "N/A"}</p>
-          <p><strong>Date of Birth:</strong> {patientData.dob || "N/A"}</p>
-          <p><strong>Sex:</strong> {patientData.sex || "N/A"}</p>
-          <p><strong>Email:</strong> {patientData.email || "N/A"}</p>
-          <p><strong>Phone:</strong> {patientData.phone || "N/A"}</p>
-          <p><strong>Address:</strong> {patientData.address || "N/A"}</p>
-          <p><strong>Allergies:</strong> {patientData.allergies || "N/A"}</p>
-          <p><strong>Medications:</strong> {patientData.medications || "N/A"}</p>
-          <p><strong>Height:</strong> {patientData.height || "N/A"}</p>
-          <p><strong>Weight:</strong> {patientData.weight || "N/A"}</p>
-          <p><strong>First Visit:</strong> {patientData.firstVisit || "N/A"}</p>
-          <p><strong>Last Visit:</strong> {patientData.lastVisit || "N/A"}</p>
+          <p>
+            <strong>First Name:</strong> {patientData.firstName || "N/A"}
+          </p>
+          <p>
+            <strong>Last Name:</strong> {patientData.lastName || "N/A"}
+          </p>
+          <p>
+            <strong>Date of Birth:</strong> {patientData.dob || "N/A"}
+          </p>
+          <p>
+            <strong>Sex:</strong> {patientData.sex || "N/A"}
+          </p>
+          <p>
+            <strong>Email:</strong> {patientData.email || "N/A"}
+          </p>
+          <p>
+            <strong>Phone:</strong> {patientData.phone || "N/A"}
+          </p>
+          <p>
+            <strong>Address:</strong> {patientData.address || "N/A"}
+          </p>
+          <p>
+            <strong>Allergies:</strong> {patientData.allergies || "N/A"}
+          </p>
+          <p>
+            <strong>Medications:</strong> {patientData.medications || "N/A"}
+          </p>
+          <p>
+            <strong>Height:</strong> {patientData.height || "N/A"}
+          </p>
+          <p>
+            <strong>Weight:</strong> {patientData.weight || "N/A"}
+          </p>
+          <p>
+            <strong>First Visit:</strong>{" "}
+            {typeof patientData.firstVisit === "object"
+              ? formatDateTime(patientData.firstVisit)
+              : "N/A"}
+          </p>
+          <p>
+            <strong>Last Visit:</strong>{" "}
+            {typeof patientData.lastVisit === "object"
+              ? formatDateTime(patientData.lastVisit)
+              : "N/A"}
+          </p>
         </div>
       ) : (
         <p>Loading...</p>
