@@ -1,8 +1,21 @@
-import { useState, useEffect } from 'react';
-import { Animated, TouchableOpacity, View, StyleSheet, Button, Alert, TextInput, Text } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
+import { 
+  Animated, 
+  TouchableWithoutFeedback, 
+  TouchableOpacity, 
+  View, 
+  StyleSheet, 
+  Alert, 
+  TextInput, 
+  Text,
+  Platform,
+  SafeAreaView
+} from 'react-native';
 import { Audio } from 'expo-av';
 import * as Location from 'expo-location';
 import { MaterialIcons } from '@expo/vector-icons';
+import { collection, addDoc, doc, runTransaction } from 'firebase/firestore';
+import { db } from './firebaseConfig';
 
 export default function App() {
   const [recording, setRecording] = useState();
@@ -10,6 +23,9 @@ export default function App() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [location, setLocation] = useState(null);
+  const [showPrompt, setShowPrompt] = useState(true);
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
   const [permissionResponse, requestPermission] = Audio.usePermissions();
 
   useEffect(() => {
@@ -99,39 +115,133 @@ export default function App() {
 
   async function pauseRecording() {
     try {
-      if (recording) {
-        if (isPaused) {
-          await recording.startAsync(); // Resume recording
-          setIsPaused(false);
-          console.log('Recording resumed');
-        } else {
-          await recording.pauseAsync(); // Pause recording
-          setIsPaused(true);
-          console.log('Recording paused');
-        }
+      if (!recording) {
+        console.log('No active recording to pause');
+        return;
+      }
+
+      if (isPaused) {
+        await recording.startAsync(); // Resume recording
+        setIsPaused(false);
+        console.log('Recording resumed');
+      } else {
+        await recording.pauseAsync(); // Pause recording
+        setIsPaused(true);
+        console.log('Recording paused');
       }
     } catch (err) {
       console.error('Failed to pause/resume recording', err);
     }
   }
 
-  async function stopRecording() {
-    console.log('Stopping recording..');
-    setRecording(undefined);
-    setIsPaused(false);
-    await recording.stopAndUnloadAsync();
-    await Audio.setAudioModeAsync(
-      {
-        allowsRecordingIOS: false,
-      }
-    );
-    const uri = recording.getURI();
-    const date = new Date();
-    const timestamp = date.toLocaleString('en-US', { 
-      timeZone: 'America/New_York' 
-    });
-    console.log(firstName, lastName, 'saved to:', uri, "at", timestamp, "in", location);
+  async function getNextId() {
+    const counterRef = doc(db, 'counters', 'recordingCounter');
+    
+    try {
+      const result = await runTransaction(db, async (transaction) => {
+        const counterDoc = await transaction.get(counterRef);
+        const newCount = (counterDoc.exists() ? counterDoc.data().value : 0) + 1;
+        
+        transaction.set(counterRef, { value: newCount });
+        return newCount;
+      });
+      
+      return result;
+    } catch (error) {
+      console.error('Error getting next ID:', error);
+      throw error;
+    }
   }
+
+  async function stopRecording() {
+    try {
+      if (!recording) {
+        console.log('No active recording to stop');
+        return;
+      }
+      
+      console.log('Stopping recording..');
+      const uri = recording.getURI();
+      await recording.stopAndUnloadAsync();
+      setRecording(undefined);
+      setIsPaused(false);
+      setShowPrompt(true);
+      const timestamp = new Date().toLocaleString('en-US', { 
+        timeZone: 'America/New_York' 
+      });
+      const latitude = location.coords.latitude;
+      const longitude = location.coords.longitude;
+      locationString = `${latitude}, ${longitude}`;
+  
+      const nextId = await getNextId();
+
+      // Save to audio_info collection
+      const audioInfo = {
+        firstName: firstName,
+        lastName: lastName,
+        timestamp: timestamp,
+        location: locationString,
+        audioFile: uri,
+        audioID: nextId.toString()
+      };
+  
+      await addDoc(collection(db, "audio_info"), audioInfo);
+      setShowNotification(true);
+      setNotificationMessage(`Recording for ${firstName} ${lastName} has been uploaded to the Patient App.`);
+
+      console.log('Recording metadata saved to audio_info collection');
+  
+    } catch (error) {
+      console.error('Error saving to Firestore:', error);
+      setShowNotification(true);
+      setNotificationMessage('Failed to save recording. Please try again.');
+    }
+  }
+
+  const CustomNotification = ({ visible, message, onDismiss }) => {
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+  
+    useEffect(() => {
+      if (visible) {
+        Animated.sequence([
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.delay(3000), // Show for 3 seconds
+          Animated.timing(fadeAnim, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]).start(() => onDismiss());
+      }
+    }, [visible]);
+  
+    if (!visible) return null;
+  
+    return (
+      <TouchableWithoutFeedback onPress={onDismiss}>
+        <Animated.View
+          style={[
+            styles.notification,
+            {
+              opacity: fadeAnim,
+              transform: [{
+                translateY: fadeAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-20, 0],
+                }),
+              }],
+            },
+          ]}
+        >
+          <Text style={styles.notificationText}>{message}</Text>
+        </Animated.View>
+      </TouchableWithoutFeedback>
+    );
+  };
 
   async function resetRecording() {
     console.log('Resetting recording..');
@@ -147,70 +257,121 @@ export default function App() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.appTitle}>DocuMed</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="First Name"
-        value={firstName}
-        onChangeText={setFirstName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Last Name"
-        value={lastName}
-        onChangeText={setLastName}
-      />
-      <View style={styles.controlsContainer}>
-        <TouchableOpacity 
-          style={styles.iconButton}
-          onPress={recording ? pauseRecording : startRecording}
-          disabled={!firstName || !lastName}
-        >
-          <MaterialIcons 
-            name={recording ? (isPaused ? "play-arrow" : "pause") : "play-arrow"} 
-            size={32} 
-            color={(!firstName || !lastName) ? "#ccc" : "#007AFF"}
-          />
-        </TouchableOpacity>
-
-        {recording && (
-          <>
-            <TouchableOpacity 
-              style={styles.iconButton}
-              onPress={stopRecording}
-            >
-              <MaterialIcons name="stop" size={32} color="#007AFF" />
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.iconButton}
-              onPress={() => {
-                resetRecording();
-              }}
-            >
-              <MaterialIcons name="refresh" size={32} color="#007AFF" />
-            </TouchableOpacity>
-          </>
+    <SafeAreaView style={styles.mainContainer}>
+      <View style={styles.container}>
+        <MaterialIcons 
+          name="local-hospital" 
+          size={100} 
+          color="#007AFF" 
+          style={styles.backgroundPattern}
+        />
+        <MaterialIcons 
+          name="healing" 
+          size={100} 
+          color="#007AFF" 
+          style={styles.backgroundPatternBottom}
+        />
+        <Text style={styles.appTitle}>DocuMed</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="First Name"
+          value={firstName}
+          onChangeText={setFirstName}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Last Name"
+          value={lastName}
+          onChangeText={setLastName}
+        />
+        {(!firstName || !lastName) && (
+          <Text style={styles.errorText}>Please enter your first and last name</Text>
         )}
+        <View style={styles.controlsContainer}>
+          {(firstName && lastName) && showPrompt && !recording && (
+            <Text style={styles.recordPrompt}>Press to start recording!</Text>
+          )}
+          <TouchableOpacity 
+            style={styles.iconButton}
+            onPress={() => {
+              setShowPrompt(false);
+              recording ? pauseRecording() : startRecording();
+            }}
+            disabled={!firstName || !lastName}
+          >
+            <MaterialIcons 
+              name={recording ? (isPaused ? "play-arrow" : "pause") : "play-arrow"} 
+              size={32} 
+              color={(!firstName || !lastName) ? "#ccc" : "#007AFF"}
+            />
+          </TouchableOpacity>
+          {recording && (
+            <>
+              <TouchableOpacity 
+                style={styles.iconButton}
+                onPress={stopRecording}
+              >
+                <MaterialIcons name="stop" size={32} color="#007AFF" />
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.iconButton}
+                onPress={() => {
+                  resetRecording();
+                }}
+              >
+                <MaterialIcons name="refresh" size={32} color="#007AFF" />
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+        <RecordingAnimation 
+          isRecording={!!recording} isPaused={isPaused} 
+        />
+        <CustomNotification
+          visible={showNotification}
+          message={notificationMessage}
+          onDismiss={() => setShowNotification(false)}
+        />
       </View>
-      <RecordingAnimation 
-        isRecording={!!recording} isPaused={isPaused} 
-      />
-      {(!firstName || !lastName) && (
-        <Text style={styles.errorText}>Please enter your first and last name</Text>
-      )}
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  mainContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'fff',
-    padding: 30,
+    paddingTop: Platform.OS === 'ios' ? 150 : 90,
+    paddingBottom: 30,
+    paddingHorizontal: 20,
+  },
+  inputContainer: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  backgroundPattern: {
+    position: 'absolute',
+    top: 40,
+    right: 30,
+    opacity: 0.1,
+  },
+  backgroundPatternTop: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 80 : 60,
+    right: 30,
+    opacity: 0.1,
+  },
+  backgroundPatternBottom: {
+    position: 'absolute',
+    bottom: 40,
+    left: 30,
+    opacity: 0.1,
   },
   input: {
     width: '100%',
@@ -227,26 +388,14 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 14,
   },
-  buttonWrapper: {
-    height: 40,
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-    overflow: 'hidden',
-  },
-  buttonContainer: {
-    width: '100%',
-    marginTop: 20,
-    marginBottom: 20,
-    gap: 20,
-  },
   appTitle: {
-    fontSize: 32,
+    fontSize: 42,
     fontWeight: 'bold',
     color: '#007AFF',
     marginBottom: 40,
     textAlign: 'center',
     width: '100%',
-    letterSpacing: 1,
+    letterSpacing: 2,
   },
   animationContainer: {
     marginVertical: 20,
@@ -272,5 +421,28 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
+  },
+  notification: {
+    position: 'absolute',
+    top: 60,
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  notificationText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  recordPrompt: {
+    position: 'absolute',
+    bottom: -40,
+    width: '100%',
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#007AFF',
+    fontWeight: 'bold',
   },
 });
