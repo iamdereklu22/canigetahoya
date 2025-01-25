@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { updatePatient } from "./dataService";
+import { updatePatient, getPatientNotes } from "./dataService";
 import { doc, onSnapshot, Timestamp } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import "./PatientPage.css";
@@ -12,13 +12,23 @@ const PatientPage = ({ patients, setPatients, notes }) => {
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState("time");
   const [sortOrder, setSortOrder] = useState("asc");
-  const patientNotes = notes[id] || {};
+  const [patientNotes, setPatientNotes] = useState({});
 
   // Load patient data from localStorage or Firebase state
   const [patient, setPatient] = useState(
     () =>
       JSON.parse(localStorage.getItem(`patient-${id}`)) || patients[id] || {}
   );
+
+  useEffect(() => {
+    if (patient && patient.firstName) {
+      const fetchNotes = async () => {
+        const fetchedNotes = await getPatientNotes(patient.firstName);
+        setPatientNotes(fetchedNotes);
+      };
+      fetchNotes();
+    }
+  }, [patient]); // ✅ Depend on the whole patient object, not `patient.firstName`
 
   // Sync patient data with Firestore
   useEffect(() => {
@@ -39,25 +49,25 @@ const PatientPage = ({ patients, setPatients, notes }) => {
   const updateField = (field, value) => {
     setPatient((prev) => {
       let formattedValue = value;
-  
+
       if (field === "firstVisit" || field === "lastVisit") {
         const utcDate = formatStore(value);
         formattedValue = Timestamp.fromDate(utcDate);
       }
-  
+
       // Ensure only the specific field is updated
       const updatedPatient = { ...prev, [field]: formattedValue };
-  
+
       setPatients((prevPatients) => ({
         ...prevPatients,
         [id]: { ...prevPatients[id], [field]: formattedValue },
       }));
-  
+
       // Update only the changed field in Firestore
       updatePatient(id, { [field]: formattedValue });
-  
+
       localStorage.setItem(`patient-${id}`, JSON.stringify(updatedPatient));
-  
+
       return updatedPatient;
     });
   };
@@ -100,17 +110,17 @@ const PatientPage = ({ patients, setPatients, notes }) => {
 
   return (
     <div className="container">
-    <header className="header">
-  <div className="left-section">
-    <Link to="/" onClick={handleBack} className="backButton">
-      ← Back
-    </Link>
-  </div>
-  <h2 className="pageTitle">Patient Details</h2>
-  <div className="right-section">
-    <span className="userIcon">👤 Derek Lu</span>
-  </div>
-</header>
+      <header className="header">
+        <div className="left-section">
+          <Link to="/" onClick={handleBack} className="backButton">
+            ← Back
+          </Link>
+        </div>
+        <h2 className="pageTitle">Patient Details</h2>
+        <div className="right-section">
+          <span className="userIcon">👤 Derek Lu</span>
+        </div>
+      </header>
 
       <input
         type="text"
@@ -192,7 +202,9 @@ const PatientPage = ({ patients, setPatients, notes }) => {
             <span>First Visit: </span>
             <input
               type="datetime-local"
-              value={patient.firstVisit ? formatDisplay(patient.firstVisit) : ""}
+              value={
+                patient.firstVisit ? formatDisplay(patient.firstVisit) : ""
+              }
               onChange={(e) => updateField("firstVisit", e.target.value)}
             />
           </label>
@@ -269,7 +281,8 @@ const PatientPage = ({ patients, setPatients, notes }) => {
           >
             <span className="highlight">{patientNotes[noteId].time}</span>
             <span>{patientNotes[noteId].author}</span>
-            <span>{patientNotes[noteId].location}</span>
+            <span>{patientNotes[noteId]?.location || "Unknown Location"}</span>
+
           </Link>
         ))}
       </div>

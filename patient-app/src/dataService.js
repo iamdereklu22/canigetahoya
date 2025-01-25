@@ -5,6 +5,9 @@ import {
   onSnapshot,
   getDocs,
   Timestamp,
+  query,
+  where,
+  getDoc,
 } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import { localToUTC } from "./timeUtils";
@@ -20,7 +23,7 @@ export const addNewPatient = async () => {
         : 1;
 
     const currentTime = Timestamp.now(); // Firestore timestamp
-    
+
     //convert utc
     const localTime = localToUTC(currentTime.seconds * 1000);
 
@@ -142,4 +145,40 @@ export const updateNote = (patients, setNotes, patientId, noteId, newText) => {
       [noteId]: { ...prev[patientId][noteId], text: newText },
     },
   }));
+};
+
+export const getPatientNotes = async (firstName) => {
+  try {
+    // Query Firestore to get all notes where firstName matches
+    const audioQuery = query(
+      collection(db, "audio_info"),
+      where("firstName", "==", firstName)
+    );
+    const audioSnapshot = await getDocs(audioQuery);
+
+    let notes = {};
+
+    for (const audioDoc of audioSnapshot.docs) {
+      const audioData = audioDoc.data();
+      const textId = audioDoc.id;
+
+      // Fetch corresponding summary_txt using textId
+      const textRef = doc(db, "summary_txt", textId);
+      const textSnap = await getDoc(textRef);
+
+      if (textSnap.exists()) {
+        notes[textId] = {
+          time: audioData.timestamp.toDate().toLocaleString(),
+          author: `${audioData.firstName} ${audioData.lastName}`,
+          location: audioData.location,
+          text: textSnap.data().text,
+        };
+      }
+    }
+
+    return notes;
+  } catch (error) {
+    console.error("Error fetching notes:", error);
+    return {};
+  }
 };
