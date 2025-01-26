@@ -10,12 +10,6 @@ const HomePage = ({ patients }) => {
   const [sortOrder, setSortOrder] = useState("asc");
   const [hoveredRow, setHoveredRow] = useState(null);
   const navigate = useNavigate();
-  const [darkMode, setDarkMode] = useState(false);
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    document.body.classList.toggle("dark-mode");
-  };
 
   console.log(hoveredRow); // ✅ unused variable
 

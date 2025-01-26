@@ -305,7 +305,7 @@ export default function App() {
           color="#007AFF"
           style={styles.backgroundPatternBottom}
         />
-        <Text style={styles.appTitle}>DocuMed</Text>
+        <Text style={styles.appTitle}>MedDocs</Text>
         <TextInput
           style={styles.input}
           placeholder="First Name"
