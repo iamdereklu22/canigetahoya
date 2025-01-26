@@ -16,7 +16,8 @@ import * as Location from "expo-location";
 import { MaterialIcons } from "@expo/vector-icons";
 import { collection, addDoc, doc, runTransaction } from "firebase/firestore";
 import { db } from "./firebaseConfig";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "./firebaseConfig"; // Import from firebaseConfig
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default function App() {
   const [recording, setRecording] = useState();
@@ -157,19 +158,19 @@ export default function App() {
 
   async function uploadAudioToStorage(uri, fileName) {
     const response = await fetch(uri);
-    const blob = await response.blob(); // Convert file to blob
-    const storageRef = ref(storage, `audio_files_recording/${fileName}`); // Upload path
+    const blob = await response.blob(); // Convert to Blob
+    const storageRef = ref(storage, `audio_files_recording/${fileName}`); // ✅ Use imported storage
 
     try {
-      await uploadBytes(storageRef, blob);
-      const downloadURL = await getDownloadURL(storageRef);
-      console.log("File uploaded successfully:", downloadURL);
-      return downloadURL;
+        await uploadBytes(storageRef, blob);
+        const downloadURL = await getDownloadURL(storageRef);
+        console.log("File uploaded successfully:", downloadURL);
+        return downloadURL;
     } catch (error) {
-      console.error("Error uploading audio:", error);
-      throw error;
+        console.error("Error uploading audio:", error);
+        throw error;
     }
-  }
+}
 
   async function stopRecording() {
     try {
