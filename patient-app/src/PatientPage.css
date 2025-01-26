@@ -1,12 +1,13 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
+/* ====== CONTAINER STYLING ====== */
 .container {
+  max-width: 800px;
+  margin: 0 auto;
   padding: 20px;
-  font-family: "Inter", sans-serif;
-  font-weight: 400;
-  color: #37352f; /* Notion’s text color */
-  background: #f4f6f9; /* Light background */
-  min-height: 100vh;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 /* Header Styling */
@@ -14,7 +15,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #e8f5e9; /* Light green */
+  background: linear-gradient(135deg, #adefad, #53ae53);
   padding: 10px 18px;
   border-radius: 8px;
   margin-bottom: 15px;
@@ -64,7 +65,7 @@
 
 /* Reverting to the Old Search Bar */
 .searchBar {
-  width: 98.5%;
+  width: 46.5%;
   padding: 8px;
   margin-bottom: 12px;
   border-radius: 6px;
@@ -84,6 +85,14 @@
   border-radius: 10px;
   box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.07);
   border: 1px solid #e0e0e0;
+}
+
+.infoContainer {
+  background: #f9f9f9;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 5px;
+  border-left: 4px solid #4CAF50;
 }
 
 /* More Compact Form Layout */
@@ -106,7 +115,7 @@
 /* Smaller Input Fields */
 .infoContainer input {
     font-family: "Inter", sans-serif;
-    font-size: 14px;
+    font-size: 12px;
   padding: 8px;
   border-radius: 6px;
   border: 1px solid #ccc;
@@ -208,4 +217,14 @@ a {
 
 a:hover {
   text-decoration: underline;
+}
+
+/* Smooth Page Load Animation */
+.text-container, .header-container {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
 }

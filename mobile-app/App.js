@@ -14,7 +14,7 @@ import {
 import { Audio } from "expo-av";
 import * as Location from "expo-location";
 import { MaterialIcons } from "@expo/vector-icons";
-import { collection, addDoc, doc, runTransaction } from "firebase/firestore";
+import { collection, addDoc, doc, runTransaction, Timestamp } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import { storage } from "./firebaseConfig"; // Import from firebaseConfig
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -162,15 +162,15 @@ export default function App() {
     const storageRef = ref(storage, `audio_files_recording/${fileName}`); // ✅ Use imported storage
 
     try {
-        await uploadBytes(storageRef, blob);
-        const downloadURL = await getDownloadURL(storageRef);
-        console.log("File uploaded successfully:", downloadURL);
-        return downloadURL;
+      await uploadBytes(storageRef, blob);
+      const downloadURL = await getDownloadURL(storageRef);
+      console.log("File uploaded successfully:", downloadURL);
+      return downloadURL;
     } catch (error) {
-        console.error("Error uploading audio:", error);
-        throw error;
+      console.error("Error uploading audio:", error);
+      throw error;
     }
-}
+  }
 
   async function stopRecording() {
     try {
@@ -186,10 +186,6 @@ export default function App() {
       setIsPaused(false);
       setShowPrompt(true);
 
-      const timestamp = new Date().toLocaleString("en-US", {
-        timeZone: "America/New_York",
-      });
-
       const latitude = location?.coords?.latitude || "Unknown";
       const longitude = location?.coords?.longitude || "Unknown";
       const locationString = `${latitude}, ${longitude}`;
@@ -203,13 +199,16 @@ export default function App() {
       // Upload to Firebase Storage
       const audioURL = await uploadAudioToStorage(uri, fileName);
 
+      // ✅ Store Firestore Timestamp
+      const timestamp = Timestamp.fromDate(new Date());
+
       // Create structured data
       const audioInfo = {
         firstName: firstName,
         lastName: lastName,
         location: locationString,
         text_id: nextId, // Incremental counter
-        timestamp: timestamp,
+        timestamp: timestamp, // ✅ Now stored as Firebase Timestamp
         audioFile: audioURL, // Store Storage URL
       };
 
@@ -221,7 +220,9 @@ export default function App() {
         `Recording for ${firstName} ${lastName} has been uploaded.`
       );
 
-      console.log("Recording metadata saved to Firestore");
+      console.log(
+        "Recording metadata saved to Firestore with correct timestamp"
+      );
     } catch (error) {
       console.error("Error saving to Firestore:", error);
       setShowNotification(true);

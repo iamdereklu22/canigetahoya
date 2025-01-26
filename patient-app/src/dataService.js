@@ -5,8 +5,6 @@ import {
   onSnapshot,
   getDocs,
   Timestamp,
-  query,
-  where,
   getDoc,
 } from "firebase/firestore";
 import { db } from "./firebaseConfig";
@@ -97,38 +95,7 @@ export const updatePatient = async (patientId, updatedData) => {
 
 // =============================================================================
 
-const initialNotes = {
-  1: {
-    t1: {
-      time: "2:00PM",
-      author: "Dr. Smith",
-      location: "ABC Hospital",
-      text: "Initial notes for John Doe.",
-    },
-    t2: {
-      time: "1:00PM",
-      author: "Dr. Smith",
-      location: "ABC Hospital",
-      text: "Follow-up notes for John Doe.",
-    },
-  },
-  2: {
-    t3: {
-      time: "2:00PM",
-      author: "Dr. Adams",
-      location: "XYZ Clinic",
-      text: "Jane Smith recovery notes.",
-    },
-  },
-  3: {
-    t4: {
-      time: "1:00PM",
-      author: "Dr. Patel",
-      location: "High Street Medical",
-      text: "Emily's check-up.",
-    },
-  },
-};
+const initialNotes = {};
 
 export const getNotes = () => {
   return new Promise((resolve) => {
@@ -147,35 +114,42 @@ export const updateNote = (patients, setNotes, patientId, noteId, newText) => {
   }));
 };
 
-export const getPatientNotes = async (firstName) => {
+export const getPatientNotes = async (firstName, lastName) => {
   try {
-    // Query Firestore to get all notes where firstName matches
-    const audioQuery = query(
-      collection(db, "audio_info"),
-      where("firstName", "==", firstName)
-    );
+    const audioQuery = collection(db, "audio_info");
     const audioSnapshot = await getDocs(audioQuery);
-
     let notes = {};
 
     for (const audioDoc of audioSnapshot.docs) {
       const audioData = audioDoc.data();
-      const textId = audioDoc.id;
 
-      // Fetch corresponding summary_txt using textId
-      const textRef = doc(db, "summary_txt", textId);
-      const textSnap = await getDoc(textRef);
+      if (audioData.firstName === firstName && audioData.lastName === lastName) {
+        const textId = audioDoc.id;
 
-      if (textSnap.exists()) {
+        const time =
+          audioData.timestamp instanceof Timestamp
+            ? audioData.timestamp.toDate().toLocaleString()
+            : new Date(audioData.timestamp).toLocaleString();
+
+        // Fetch summary text
+        const textRef = doc(db, "summary_txt", audioData.text_id.toString());
+        const textSnap = await getDoc(textRef);
+
+        // Fetch doctor notes
+        const doctorRef = doc(db, "doctor_info", audioData.text_id.toString());
+        const doctorSnap = await getDoc(doctorRef);
+
         notes[textId] = {
-          time: audioData.timestamp.toDate().toLocaleString(),
+          time: time,
           author: `${audioData.firstName} ${audioData.lastName}`,
-          location: audioData.location,
-          text: textSnap.data().text,
+          location: audioData.location || "Unknown",
+          text: textSnap.exists() ? textSnap.data().text : "No summary available",
+          doctorNotes: doctorSnap.exists() ? doctorSnap.data().notes : "", // Ensure doctor notes are fetched
         };
       }
     }
 
+    console.log("Fetched notes with doctor info:", notes);
     return notes;
   } catch (error) {
     console.error("Error fetching notes:", error);

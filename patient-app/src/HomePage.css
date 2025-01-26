@@ -1,0 +1,167 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
+/* ====== CONTAINER STYLING ====== */
+.header-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* ====== HEADER STYLES (WITH SPACING FIX) ====== */
+.header-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #adefad, #53ae53);
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Add spacing between header elements */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 18px; /* Increased from 10px to 18px */
+}
+
+/* Search Bar */
+.header-searchBar {
+  padding: 8px 12px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  min-width: 200px;
+}
+
+/* Add Patient Button */
+.header-addButton {
+  padding: 8px 14px;
+  border-radius: 20px;
+  background: #2e7d32;
+  color: white;
+  border: none;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+
+.header-addButton:hover {
+  background: #16691f;
+}
+
+/* User Icon */
+.header-userIcon {
+  font-size: 14px;
+  background: #2e7d32;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-weight: bold;
+  display: inline-block;
+}
+
+/* ====== TABLE STYLES (UNCHANGED) ====== */
+.header-tableContainer {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 10px;
+}
+
+.header-tableHeader {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  padding: 8px;
+  background: #c2c4c2;
+  border-radius: 5px;
+}
+
+.header-columnHeader {
+  cursor: pointer;
+  color: #363636;
+}
+
+.header-patientRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px;
+  margin-top: 3px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: black;
+  background: #ecf1ec;
+  border-radius: 5px;
+  transition: background 0.2s ease-in-out;
+}
+
+.header-patientRow:hover {
+  background: #b0d6b1;
+}
+
+.header-highlight {
+  color: #3c893f;
+}
+
+/* Dark Mode Styles */
+.dark-mode {
+    background-color: #121212;
+    color: #e0e0e0;
+  }
+  
+  .dark-mode .header-container {
+    background-color: #1e1e1e;
+    box-shadow: none;
+  }
+  
+  .dark-mode .header-tableContainer {
+    background: #242424;
+  }
+  
+  .dark-mode .header-tableHeader {
+    background: #333;
+    color: #bdbdbd;
+  }
+  
+  .dark-mode .header-patientRow {
+    background: #2c2c2c;
+  }
+  
+  .dark-mode .header-patientRow:hover {
+    background: #373737;
+  }
+  
+  .dark-mode .header-searchBar {
+    background: #2c2c2c;
+    color: #ffffff;
+    border: 1px solid #444;
+  }
+
+  /* Hero Banner */
+.header-hero {
+    background: #7ac87d;
+    color: white;
+    padding: 20px;
+    text-align: center;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .header-hero h1 {
+    font-size: 24px;
+    margin-bottom: 5px;
+  }
+  
+  .header-hero p {
+    font-size: 16px;
+    opacity: 0.9;
+  }

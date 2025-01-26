@@ -19,6 +19,6 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firestore
 const db = getFirestore(app);
 
-const storage = getStorage(app); // Initialize Storage
+const storage = getStorage(app, "gs://audio_files_recording"); // Initialize Storage
 
 export { db, storage }; // Export Firestore instance

@@ -23,12 +23,16 @@ const PatientPage = ({ patients, setPatients, notes }) => {
   useEffect(() => {
     if (patient && patient.firstName) {
       const fetchNotes = async () => {
-        const fetchedNotes = await getPatientNotes(patient.firstName);
+        const fetchedNotes = await getPatientNotes(
+          patient.firstName,
+          patient.lastName
+        );
+        console.log("Setting patient notes:", fetchedNotes);
         setPatientNotes(fetchedNotes);
       };
       fetchNotes();
     }
-  }, [patient]); // ✅ Depend on the whole patient object, not `patient.firstName`
+  }, [patient]); // ✅ Depend on `patient` object
 
   // Sync patient data with Firestore
   useEffect(() => {
@@ -89,11 +93,7 @@ const PatientPage = ({ patients, setPatients, notes }) => {
 
   // Sort notes
   const sortedNotes = Object.keys(patientNotes).sort((a, b) => {
-    const valA = patientNotes[a][sortField];
-    const valB = patientNotes[b][sortField];
-    return sortOrder === "asc"
-      ? valA.localeCompare(valB)
-      : valB.localeCompare(valA);
+    return new Date(patientNotes[b].time) - new Date(patientNotes[a].time);
   });
 
   const toggleSort = (field) => {
@@ -273,18 +273,24 @@ const PatientPage = ({ patients, setPatients, notes }) => {
             {sortField === "location" ? (sortOrder === "asc" ? "▲" : "▼") : ""}
           </span>
         </div>
-        {sortedNotes.map((noteId) => (
-          <Link
-            to={`/text/${id}/${noteId}`}
-            key={noteId}
-            className="patientRow"
-          >
-            <span className="highlight">{patientNotes[noteId].time}</span>
-            <span>{patientNotes[noteId].author}</span>
-            <span>{patientNotes[noteId]?.location || "Unknown Location"}</span>
 
-          </Link>
-        ))}
+        {sortedNotes.length > 0 ? (
+          sortedNotes.map((noteId) => (
+            <Link
+              key={noteId}
+              to={`/text/${id}/${noteId}`} // ✅ Ensure noteId is correctly passed
+              className="patientRow"
+            >
+              <span className="highlight">{patientNotes[noteId].time}</span>
+              <span>{patientNotes[noteId].author}</span>
+              <span>
+                {patientNotes[noteId]?.location || "Unknown Location"}
+              </span>
+            </Link>
+          ))
+        ) : (
+          <p>No notes available.</p>
+        )}
       </div>
     </div>
   );

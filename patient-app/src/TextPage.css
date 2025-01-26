@@ -1,43 +1,27 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
-
-.container {
+/* ====== CONTAINER STYLING ====== */
+.text-container {
+  max-width: 800px;
+  margin: 0 auto;
   padding: 20px;
-  font-family: "Inter", sans-serif;
-  font-weight: 400;
-  color: #37352f; /* Notion’s text color */
-  background: #f4f6f9; /* Light background */
-  min-height: 100vh;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Header Styling */
-.header {
+/* ====== HEADER STYLES (MATCH PATIENT PAGE) ====== */
+.text-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #e8f5e9; /* Light green */
+  background: linear-gradient(135deg, #adefad, #53ae53);
   padding: 10px 18px;
   border-radius: 8px;
   margin-bottom: 15px;
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.left-section {
-  flex: 1;
-}
-
-.right-section {
-  flex: 1;
-  text-align: right;
-}
-
-.pageTitle {
-  font-size: 20px;
-  font-weight: 600;
-  color: #37352f;
-  margin: 0;
-}
-
-.backButton {
+/* Back Button */
+.text-backButton {
   text-decoration: none;
   font-size: 15px;
   color: #ffffff;
@@ -48,11 +32,21 @@
   transition: background 0.2s ease-in-out;
 }
 
-.backButton:hover {
+.text-backButton:hover {
   background-color: #388e3c;
 }
 
-.userIcon {
+/* Page Title */
+.text-pageTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #37352f;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* User Icon */
+.text-userIcon {
   font-size: 15px;
   background: #2e7d32;
   color: white;
@@ -62,171 +56,92 @@
   display: inline-block;
 }
 
-/* Reverting to the Old Search Bar */
-.searchBar {
-  width: 98.5%;
-  padding: 8px;
-  margin-bottom: 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 14px;
-  background: #ffffff;
-}
-
-/* Compact Patient Info Section */
-.infoContainer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 15px;
-  justify-content: space-between;
-  background: white;
-  padding: 8px; /* Reduced padding */
-  margin-bottom: 12px;
-
-  border-radius: 10px;
-  box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.07);
-  border: 1px solid #e0e0e0;
-}
-
-/* More Compact Form Layout */
-.column {
-  width: 48%;
-  display: flex;
-  flex-direction: column;
-  gap: 8px; /* Less space between fields */
-}
-
-/* Labels */
-.infoContainer label span {
-  font-size: 13px;
-  font-weight: 600;
-  color: #333;
-  display: block;
-  margin-bottom: 3px;
-}
-
-/* Smaller Input Fields */
-.infoContainer input {
-    font-family: "Inter", sans-serif;
-    font-size: 14px;
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+/* ====== METADATA STYLING ====== */
+.text-infoContainer {
   background: #f9f9f9;
-  width: 96%;
-  transition: all 0.2s ease-in-out;
+  padding: 10px;
+  margin-top: 5px;
+  border-radius: 5px;
+  border-left: 4px solid #4CAF50;
 }
 
-.infoContainer input:focus {
-  border-color: #4caf50;
-  background: white;
-  outline: none;
-  box-shadow: 0px 2px 5px rgba(0, 128, 0, 0.25);
+.text-infoContainer p {
+  margin: 2px 0;
 }
 
-/* Smaller Sex Selection Buttons */
-.sexLabel {
+/* ====== TEXTAREA STYLES ====== */
+.text-summaryTextArea, .text-doctorNotesArea {
+  width: 97%;
+  font-size: 14px; /* Match Notion-style font */
+  font-family: "Inter", sans-serif;
+  font-weight: 400;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 10px;
+  resize: vertical;
+  margin-bottom: 5px;
+  background: #fff;
+  color: #2e2e2e;
+}
+
+/* Summary Textbox */
+.text-summaryTextArea {
+  height: 180px;
+}
+
+/* Doctor Notes Textbox */
+.text-doctorNotesArea {
+  height: 80px;
+  min-height: 50px;
+  max-height: 150px;
+}
+
+/* ====== BUTTON STYLES ====== */
+/* Button Container */
+.text-buttonContainer {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  gap: 10px; /* Space between Save and Export */
+  margin-top: 10px;
 }
 
-.sexButton {
-  padding: 6px 14px;
-  border-radius: 6px;
-  background: #4caf50;
+/* Save Button */
+.text-saveButton {
+  background: #4CAF50;
   color: white;
   border: none;
   font-size: 14px;
-  font-weight: bold;
-  transition: background 0.2s ease-in-out;
+  padding: 10px 15px;
   cursor: pointer;
+  border-radius: 5px;
+  transition: background 0.2s;
 }
 
-.sexButton:hover {
+.text-saveButton:hover {
   background: #388e3c;
 }
 
-.sexButton.active {
-  background-color: #1e5a20;
-}
-
-/* Notes Table */
-.tableContainer {
-  background: white;
-  border-radius: 10px;
-  padding: 0;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  overflow: hidden;
-}
-
-.tableHeader {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  font-weight: bold;
-  background: #4caf50;
-  padding: 8px 12px;
-  text-align: left;
-  color: #ffffff;
-  border-radius: 10px 10px 0 0;
-}
-
-.patientRow {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  align-items: left;
-  justify-content: left;
-  padding: 8px 12px;
-  text-decoration: none;
-  color: black;
+/* Export Button */
+.text-exportButton {
+  background: #4CAF50;
+  color: white;
+  border: none;
   font-size: 14px;
-  font-weight: bold;
-  background: #eff8ee;
-  border-top: 1px solid #c0dfc0;
-  transition: background 0.2s ease-in-out;
-}
-
-.patientRow:hover {
-  background: #98d696;
-}
-
-.columnHeader {
+  padding: 10px 15px;
   cursor: pointer;
-  text-align: left;
-  padding: 0px;
+  border-radius: 5px;
+  transition: background 0.2s;
 }
 
-.highlight {
-  font-weight: bold;
-  color: #1b5e20;
+.text-exportButton:hover {
+  background: #388e3c;
 }
 
-a {
-  text-decoration: none;
-  color: #4a148c;
-  font-weight: bold;
+/* Smooth Page Load Animation */
+.text-container, .header-container {
+  animation: fadeIn 0.5s ease-in-out;
 }
 
-a:hover {
-  text-decoration: underline;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-
-.textArea {
-    width: 97%;
-    height: 250px;
-    padding: 12px;
-    font-size: 16px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    outline: none;
-    resize: vertical;
-    font-family: "Inter", sans-serif;
-    background-color: #fff;
-    transition: all 0.3s ease;
-  }
-  
-  .textArea:focus {
-    border: 1px solid #008CBA;
-    box-shadow: 0 0 8px rgba(0, 140, 186, 0.2);
-  }
