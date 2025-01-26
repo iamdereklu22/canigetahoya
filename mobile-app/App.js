@@ -18,6 +18,8 @@ import { collection, addDoc, doc, runTransaction } from "firebase/firestore";
 import { db } from "./firebaseConfig";
 import { storage } from "./firebaseConfig"; // Import from firebaseConfig
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { getAuth } from "firebase/auth";
+
 
 export default function App() {
   const [recording, setRecording] = useState();
@@ -157,20 +159,38 @@ export default function App() {
   }
 
   async function uploadAudioToStorage(uri, fileName) {
-    const response = await fetch(uri);
-    const blob = await response.blob(); // Convert to Blob
+    console.log("Storage instance:", storage);
+    console.log("Uploading file from URI:", uri);
+
+    const response = await fetch(uri).catch((err) =>
+      console.error("Fetch failed:", err)
+    );
+    console.log("Response status:", response.status);
+
+    const blob = await response.blob();
+    console.log("Blob created:", blob);
+
     const storageRef = ref(storage, `audio_files_recording/${fileName}`); // ✅ Use imported storage
 
+    const auth = getAuth();
+    console.log("Current User:", auth.currentUser);
+
     try {
-        await uploadBytes(storageRef, blob);
-        const downloadURL = await getDownloadURL(storageRef);
-        console.log("File uploaded successfully:", downloadURL);
-        return downloadURL;
+      await uploadBytes(storageRef, blob);
     } catch (error) {
-        console.error("Error uploading audio:", error);
-        throw error;
+      console.error("Error uploading bytes:", error);
+      throw error;
     }
-}
+
+    try {
+      const downloadURL = await getDownloadURL(storageRef);
+      console.log("File uploaded successfully:", downloadURL);
+      return downloadURL;
+    } catch (error) {
+      console.error("Error uploading audio:", error);
+      throw error;
+    }
+  }
 
   async function stopRecording() {
     try {
