@@ -16,6 +16,7 @@ import * as Location from "expo-location";
 import { MaterialIcons } from "@expo/vector-icons";
 import { collection, addDoc, doc, runTransaction } from "firebase/firestore";
 import { db } from "./firebaseConfig";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default function App() {
   const [recording, setRecording] = useState();
@@ -154,6 +155,22 @@ export default function App() {
     }
   }
 
+  async function uploadAudioToStorage(uri, fileName) {
+    const response = await fetch(uri);
+    const blob = await response.blob(); // Convert file to blob
+    const storageRef = ref(storage, `audio_files_recording/${fileName}`); // Upload path
+
+    try {
+      await uploadBytes(storageRef, blob);
+      const downloadURL = await getDownloadURL(storageRef);
+      console.log("File uploaded successfully:", downloadURL);
+      return downloadURL;
+    } catch (error) {
+      console.error("Error uploading audio:", error);
+      throw error;
+    }
+  }
+
   async function stopRecording() {
     try {
       if (!recording) {
@@ -179,6 +196,12 @@ export default function App() {
       // Fetch and increment the text_id counter
       const nextId = await getNextId();
 
+      // Generate a filename for storage
+      const fileName = `recording_${nextId}.m4a`;
+
+      // Upload to Firebase Storage
+      const audioURL = await uploadAudioToStorage(uri, fileName);
+
       // Create structured data
       const audioInfo = {
         firstName: firstName,
@@ -186,7 +209,7 @@ export default function App() {
         location: locationString,
         text_id: nextId, // Incremental counter
         timestamp: timestamp,
-        audioFile: uri,
+        audioFile: audioURL, // Store Storage URL
       };
 
       // Save to Firestore in the "audio_info" collection
